@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório de Eventos - ThingSpeak</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #000;
+            color: #fff;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+        }
+        table {
+            width: 80%;
+            margin: 20px auto;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #fff;
+        }
+        th {
+            background-color: #444;
+        }
+        tr:nth-child(even) {
+            background-color: #222;
+        }
+        tr:nth-child(odd) {
+            background-color: #333;
+        }
+    </style>
+</head>
+<body>
+    <h1>Relatório de Eventos</h1>
+    <table id="dataTable">
+        <thead>
+            <tr>
+                <th>Usuário</th>
+                <th>Gaveta</th>
+                <th>Ferramenta</th>
+                <th>Data e Hora</th>
+                <th>Ação</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+    <script>
+        const channelID = 2780484;
+        const readAPIKey = "4GN8RREPZSE1F83";
+
+        async function fetchThingSpeakData() {
+            try {
+                const response = await fetch(`https://api.thingspeak.com/channels/${channelID}/feeds.json?api_key=${readAPIKey}&results=10`);
+                const data = await response.json();
+                const tableBody = document.querySelector("#dataTable tbody");
+                tableBody.innerHTML = ""; // Limpa a tabela
+
+                data.feeds.forEach(feed => {
+                    const row = document.createElement("tr");
+                    row.innerHTML = `
+                        <td>${feed.field1 || "N/A"}</td>
+                        <td>${feed.field2 || "N/A"}</td>
+                        <td>${feed.field3 || "N/A"}</td>
+                        <td>${feed.created_at}</td>
+                        <td>${feed.field4 || "N/A"}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            } catch (error) {
+                console.error("Erro ao buscar dados do ThingSpeak:", error);
+            }
+        }
+
+        setInterval(fetchThingSpeakData, 15000); // Atualiza a cada 15 segundos
+        fetchThingSpeakData(); // Atualiza imediatamente ao carregar
+    </script>
+</body>
+</html>
