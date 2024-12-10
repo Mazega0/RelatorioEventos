@@ -50,19 +50,58 @@
         tr:nth-child(odd) {
             background-color: #333;
         }
+        .filter-icon {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background-color: #ff5722;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            transition: transform 0.2s, background-color 0.2s;
+        }
+        .filter-icon:hover {
+            transform: scale(1.1);
+            background-color: #ff7043;
+        }
+        .filter-icon i {
+            color: white;
+            font-size: 24px;
+        }
+        tr.hidden {
+            display: none;
+        }
     </style>
     <script>
         const channelID = 2780484; // Substitua pelo seu Channel ID do ThingSpeak
         const readAPIKey = "4GN8RREPZSE1F83"; // Substitua pela sua Read API Key do ThingSpeak
+        let filterActive = false; // Controle do estado do filtro
 
         async function fetchThingSpeakData() {
             try {
-                const response = await fetch(`https://api.thingspeak.com/channels/${channelID}/feeds.json?api_key=${readAPIKey}&results=10`);
+                const response = await fetch(`https://api.thingspeak.com/channels/${channelID}/feeds.json?api_key=${readAPIKey}&results=50`);
                 const data = await response.json();
                 const tableBody = document.querySelector("#dataTable tbody");
                 tableBody.innerHTML = ""; // Limpa a tabela
 
+                const ferramentasRetiradas = {}; // Objeto para rastrear estado atual
+
+                // Determinar estado atual das ferramentas
                 data.feeds.forEach(feed => {
+                    const key = `${feed.field3}_${feed.field2}`; // Combina ferramenta e gaveta
+                    ferramentasRetiradas[key] = (feed.field4 === "RETIRADA");
+                });
+
+                // Atualizar tabela com base no filtro
+                data.feeds.forEach(feed => {
+                    const key = `${feed.field3}_${feed.field2}`;
+                    const ferramentaRetirada = ferramentasRetiradas[key];
+
                     const row = document.createElement("tr");
                     row.innerHTML = `
                         <td>${feed.field1 || "N/A"}</td>
@@ -71,11 +110,23 @@
                         <td>${feed.created_at.replace("T", " ").substring(0, 19)}</td>
                         <td>${feed.field4 || "N/A"}</td>
                     `;
+
+                    // Aplica filtro para mostrar apenas retiradas
+                    if (filterActive && !ferramentaRetirada) {
+                        row.classList.add("hidden");
+                    }
+
                     tableBody.appendChild(row);
                 });
             } catch (error) {
                 console.error("Erro ao buscar dados do ThingSpeak:", error);
             }
+        }
+
+        // Alternar estado do filtro
+        function toggleFilter() {
+            filterActive = !filterActive;
+            fetchThingSpeakData();
         }
 
         setInterval(fetchThingSpeakData, 15000); // Atualiza a cada 15 segundos
@@ -98,6 +149,10 @@
             </thead>
             <tbody></tbody>
         </table>
+        <div class="filter-icon" onclick="toggleFilter()" title="Filtrar ferramentas retiradas">
+            <i class="fas fa-filter"></i>
+        </div>
     </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/js/all.min.js"></script>
 </body>
 </html>
