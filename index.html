@@ -98,11 +98,13 @@
 
                 const ferramentasRetiradas = {}; // Objeto para rastrear estado atual
 
+                // Determinar estado atual das ferramentas
                 data.feeds.forEach(feed => {
-                    const key = `${feed.field3}_${feed.field2}`;
+                    const key = `${feed.field3}_${feed.field2}`; // Combina ferramenta e gaveta
                     ferramentasRetiradas[key] = (feed.field4 === "RETIRADA");
                 });
 
+                // Atualizar tabela com base no filtro
                 data.feeds.forEach(feed => {
                     const key = `${feed.field3}_${feed.field2}`;
                     const ferramentaRetirada = ferramentasRetiradas[key];
@@ -115,6 +117,7 @@
                         <td>${feed.created_at.replace("T", " ").substring(0, 19)}</td>
                     `;
 
+                    // Aplica filtro para mostrar apenas retiradas
                     if (filterActive && !ferramentaRetirada) {
                         row.classList.add("hidden");
                     }
@@ -126,13 +129,14 @@
             }
         }
 
+        // Alternar estado do filtro
         function toggleFilter() {
             filterActive = !filterActive;
             fetchThingSpeakData();
         }
 
         setInterval(fetchThingSpeakData, 15000); // Atualiza a cada 15 segundos
-        fetchThingSpeakData();
+        fetchThingSpeakData(); // Atualiza imediatamente ao carregar
     </script>
 </head>
 <body>
