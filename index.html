@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Relatório de Eventos - Usina Santa Fé</title>
+    <title>Relatório de Ferramentas - Manutenção Aeronáutica</title>
     <style>
         body {
-            background-color: #f0f8ff; /* Azul claro */
-            color: #002366; /* Azul escuro */
+            background-color: #1c1c2e; /* Azul escuro elegante */
+            color: #ffffff; /* Branco puro */
             font-family: Arial, sans-serif;
             text-align: center;
             margin: 0;
@@ -16,18 +16,20 @@
         .container {
             margin: 0 auto;
             padding: 20px;
-            max-width: 800px;
+            max-width: 900px;
+            background-color: #2c2c3e; /* Fundo levemente mais claro */
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
         }
         img {
             display: block;
             margin: 0 auto 20px;
-            width: 200px;
-            border-radius: 8px; /* Cantos arredondados */
-            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2); /* Sombra */
+            width: 150px;
+            border-radius: 8px;
         }
         h1 {
-            color: #002366; /* Azul escuro */
-            font-size: 24px;
+            color: #00aaff; /* Azul claro para destacar */
+            font-size: 28px;
             margin-bottom: 20px;
         }
         table {
@@ -36,21 +38,24 @@
             margin-top: 20px;
         }
         table, th, td {
-            border: 1px solid #0077b6; /* Azul médio */
+            border: 1px solid #00aaff; /* Azul claro */
         }
         th, td {
-            padding: 10px;
+            padding: 12px;
             text-align: center;
         }
         th {
-            background-color: #0077b6; /* Azul médio */
+            background-color: #0077b6; /* Azul mais intenso */
             color: white;
         }
         tr:nth-child(even) {
-            background-color: #e6f7ff; /* Azul muito claro */
+            background-color: #2e2e40; /* Cinza escuro */
         }
         tr:nth-child(odd) {
-            background-color: #f0f8ff; /* Azul claro */
+            background-color: #1f1f2f; /* Cinza mais claro */
+        }
+        tr:hover {
+            background-color: #005f99; /* Azul mais claro ao passar o mouse */
         }
         .filter-icon {
             position: fixed;
@@ -58,18 +63,18 @@
             right: 20px;
             width: 60px;
             height: 60px;
-            background-color: #0077b6; /* Azul médio */
+            background-color: #00aaff;
             border-radius: 50%;
             display: flex;
             justify-content: center;
             align-items: center;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
             cursor: pointer;
             transition: transform 0.2s, background-color 0.2s;
         }
         .filter-icon:hover {
             transform: scale(1.1);
-            background-color: #005f99; /* Azul mais escuro */
+            background-color: #0077b6; /* Azul mais intenso */
         }
         .filter-icon i {
             color: white;
@@ -93,13 +98,11 @@
 
                 const ferramentasRetiradas = {}; // Objeto para rastrear estado atual
 
-                // Determinar estado atual das ferramentas
                 data.feeds.forEach(feed => {
-                    const key = `${feed.field3}_${feed.field2}`; // Combina ferramenta e gaveta
+                    const key = `${feed.field3}_${feed.field2}`;
                     ferramentasRetiradas[key] = (feed.field4 === "RETIRADA");
                 });
 
-                // Atualizar tabela com base no filtro
                 data.feeds.forEach(feed => {
                     const key = `${feed.field3}_${feed.field2}`;
                     const ferramentaRetirada = ferramentasRetiradas[key];
@@ -112,7 +115,6 @@
                         <td>${feed.created_at.replace("T", " ").substring(0, 19)}</td>
                     `;
 
-                    // Aplica filtro para mostrar apenas retiradas
                     if (filterActive && !ferramentaRetirada) {
                         row.classList.add("hidden");
                     }
@@ -124,20 +126,19 @@
             }
         }
 
-        // Alternar estado do filtro
         function toggleFilter() {
             filterActive = !filterActive;
             fetchThingSpeakData();
         }
 
         setInterval(fetchThingSpeakData, 15000); // Atualiza a cada 15 segundos
-        fetchThingSpeakData(); // Atualiza imediatamente ao carregar
+        fetchThingSpeakData();
     </script>
 </head>
 <body>
     <div class="container">
-        <img src="https://th.bing.com/th/id/R.afd02dda6f3356d4a7e51f0b47b79e42?rik=RsXqYmTxjDXF%2bw&pid=ImgRaw&r=0" alt="Logo Usina Santa Fé">
-        <h1>Relatório de Eventos - Usina Santa Fé</h1>
+        <img src="https://media.istockphoto.com/id/1250850485/fr/vectoriel/ic%C3%B4ne-davion-mod%C3%A8le-de-logo-davion-conception-dic%C3%B4ne-illustration-vectorielle2.jpg?s=170667a&w=0&k=20&c=POsYCqY9r_DS-QUSHmNNSVLBciq2hKYbUrNqwAvWdsE=" alt="Logo Aviação">
+        <h1>Relatório de Ferramentas - Manutenção Aeronáutica</h1>
         <table id="dataTable">
             <thead>
                 <tr>
