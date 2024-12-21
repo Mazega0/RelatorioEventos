@@ -101,9 +101,17 @@
     <h1>RELATÓRIO COMPLETO - USINA SANTA FÉ</h1>
     <table id="dataTable">
       <thead id="tableHeader">
-        <!-- Cabeçalho da tabela será gerado dinamicamente -->
+        <tr>
+          <th>Usuário</th>
+          <th>Ação</th>
+          <th>Gaveta</th>
+          <th>Ferramenta</th>
+          <th>Data / Hora</th>
+        </tr>
       </thead>
-      <tbody></tbody>
+      <tbody>
+        <!-- Dados serão carregados dinamicamente -->
+      </tbody>
     </table>
     <div class="button">
       <div id="checkin" title="Filtrar ferramentas retiradas" onclick="toggleFilter()">CHECK-IN</div>
@@ -112,15 +120,15 @@
   </div>
 
   <script>
-    // URLs das rotas do servidor web
-    const eventosURL = "http://SEU_SERVIDOR/eventos";
-    const ferramentasEmUsoURL = "http://SEU_SERVIDOR/ferramentasEmUso";
-    const cadastrosURL = "http://SEU_SERVIDOR/cadastros";
+    // URLs das rotas do servidor (substitua pelo IP ou domínio real do ESP32)
+    const eventosURL = "http://192.168.0.10/eventos";
+    const ferramentasEmUsoURL = "http://192.168.0.10/ferramentasEmUso";
+    const cadastrosURL = "http://192.168.0.10/cadastros";
 
     let filterActive = false; // Controle do estado do filtro
     let cadastroActive = false; // Controle do estado de exibição de cadastros
 
-    // Função para buscar dados do servidor
+    // Função para buscar e atualizar os dados na tabela
     async function atualizarTabela() {
       try {
         let response;
@@ -136,7 +144,6 @@
         }
 
         const data = await response.json();
-
         const tableBody = document.querySelector("#dataTable tbody");
         tableBody.innerHTML = ""; // Limpa a tabela
 
@@ -163,6 +170,7 @@
       }
     }
 
+    // Atualiza o cabeçalho da tabela para "Eventos padrão"
     function atualizarCabecalhoPadrao() {
       const tableHeader = document.querySelector("#tableHeader");
       tableHeader.innerHTML = `
@@ -176,6 +184,7 @@
       `;
     }
 
+    // Atualiza o cabeçalho da tabela para "Cadastros e Exclusões"
     function atualizarCabecalhoCadastro() {
       const tableHeader = document.querySelector("#tableHeader");
       tableHeader.innerHTML = `
@@ -188,20 +197,22 @@
       `;
     }
 
+    // Alterna entre exibir ferramentas em uso e eventos padrão
     function toggleFilter() {
       filterActive = !filterActive;
       cadastroActive = false;
       atualizarTabela();
     }
 
+    // Alterna entre exibir cadastros/exclusões e eventos padrão
     function toggleCadastro() {
       cadastroActive = !cadastroActive;
       filterActive = false;
       atualizarTabela();
     }
 
-    // Atualiza a tabela a cada 15 segundos
-    setInterval(atualizarTabela, 15000);
+    // Atualiza a tabela a cada 9 segundos
+    setInterval(atualizarTabela, 9000);
     atualizarTabela(); // Atualização inicial
   </script>
 </body>
