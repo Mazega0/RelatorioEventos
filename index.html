@@ -120,10 +120,10 @@
   </div>
 
   <script>
-    // URLs das rotas do servidor (substitua pelo IP ou domínio real do ESP32)
-    const eventosURL = "/eventos";
-    const ferramentasEmUsoURL = "/ferramentasEmUso";
-    const cadastrosURL = "/cadastros";
+    // Configurações do ThingSpeak
+    const thingSpeakChannelID = "2780484";
+    const thingSpeakReadKey = "VQF3FZEJ0JUT1B5N";
+    const thingSpeakURL = `https://api.thingspeak.com/channels/${thingSpeakChannelID}/feeds.json?api_key=${thingSpeakReadKey}&results=100`;
 
     let filterActive = false; // Controle do estado do filtro
     let cadastroActive = false; // Controle do estado de exibição de cadastros
@@ -131,42 +131,41 @@
     // Função para buscar e atualizar os dados na tabela
     async function atualizarTabela() {
       try {
-        let response;
-        if (cadastroActive) {
-          response = await fetch(cadastrosURL);
-          atualizarCabecalhoCadastro();
-        } else if (filterActive) {
-          response = await fetch(ferramentasEmUsoURL);
-          atualizarCabecalhoPadrao();
-        } else {
-          response = await fetch(eventosURL);
-          atualizarCabecalhoPadrao();
-        }
-
+        const response = await fetch(thingSpeakURL);
         const data = await response.json();
+
         const tableBody = document.querySelector("#dataTable tbody");
         tableBody.innerHTML = ""; // Limpa a tabela
 
-        data.forEach(item => {
+        const feeds = data.feeds.filter(feed => {
+          if (cadastroActive) {
+            return feed.field5 === "CADASTRO" || feed.field5 === "EXCLUSAO";
+          } else if (filterActive) {
+            return feed.field5 === "RETIRADA"; // Apenas ferramentas retiradas
+          }
+          return true; // Mostra todos os eventos
+        });
+
+        feeds.forEach(feed => {
           const row = document.createElement("tr");
           row.innerHTML = cadastroActive
             ? `
-              <td>${item.usuario || "N/A"}</td>
-              <td>${item.acao || "N/A"}</td>
-              <td>${item.id || "N/A"}</td>
-              <td>${item.dataHora || "N/A"}</td>
+              <td>${feed.field1 || "N/A"}</td>
+              <td>${feed.field5 || "N/A"}</td>
+              <td>${feed.field6 || "N/A"}</td>
+              <td>${feed.field4 || "N/A"}</td>
             `
             : `
-              <td>${item.usuario || "N/A"}</td>
-              <td>${item.acao || "N/A"}</td>
-              <td>${item.gaveta || "N/A"}</td>
-              <td>${item.ferramenta || "N/A"}</td>
-              <td>${item.dataHora || "N/A"}</td>
+              <td>${feed.field1 || "N/A"}</td>
+              <td>${feed.field5 || "N/A"}</td>
+              <td>${feed.field2 || "N/A"}</td>
+              <td>${feed.field3 || "N/A"}</td>
+              <td>${feed.field4 || "N/A"}</td>
             `;
           tableBody.appendChild(row);
         });
       } catch (error) {
-        console.error("Erro ao buscar dados do servidor:", error);
+        console.error("Erro ao buscar dados do ThingSpeak:", error);
       }
     }
 
@@ -211,8 +210,8 @@
       atualizarTabela();
     }
 
-    // Atualiza a tabela a cada 15 segundos
-    setInterval(atualizarTabela, 15000);
+    // Atualiza a tabela a cada 8 segundos
+    setInterval(atualizarTabela, 8000);
     atualizarTabela(); // Atualização inicial
   </script>
 </body>
