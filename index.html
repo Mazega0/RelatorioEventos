@@ -107,113 +107,55 @@
           <th>Gaveta</th>
           <th>Ferramenta</th>
           <th>Data / Hora</th>
+          <th>ID</th>
         </tr>
       </thead>
       <tbody>
         <!-- Dados serão carregados dinamicamente -->
       </tbody>
     </table>
-    <div class="button">
-      <div id="checkin" title="Filtrar ferramentas retiradas" onclick="toggleFilter()">CHECK-IN</div>
-      <div id="cadastro" title="Visualizar cadastros/exclusões" onclick="toggleCadastro()">CADASTROS</div>
-    </div>
   </div>
 
   <script>
-    // URLs das rotas do servidor (substitua pelo IP ou domínio real do ESP32)
-    const eventosURL = "http://192.168.0.10/eventos";
-    const ferramentasEmUsoURL = "http://192.168.0.10/ferramentasEmUso";
-    const cadastrosURL = "http://192.168.0.10/cadastros";
-
-    let filterActive = false; // Controle do estado do filtro
-    let cadastroActive = false; // Controle do estado de exibição de cadastros
+    // URL da API do ThingSpeak (usando Read API Key e Channel ID do seu canal)
+    const thingSpeakURL = "https://api.thingspeak.com/channels/2780484/feeds.json?api_key=4GN8RREPZSEI1F83&results=50";
 
     // Função para buscar e atualizar os dados na tabela
-    async function atualizarTabela() {
+    async function fetchData() {
       try {
-        let response;
-        if (cadastroActive) {
-          response = await fetch(cadastrosURL);
-          atualizarCabecalhoCadastro();
-        } else if (filterActive) {
-          response = await fetch(ferramentasEmUsoURL);
-          atualizarCabecalhoPadrao();
-        } else {
-          response = await fetch(eventosURL);
-          atualizarCabecalhoPadrao();
-        }
-
+        const response = await fetch(thingSpeakURL);
         const data = await response.json();
-        const tableBody = document.querySelector("#dataTable tbody");
-        tableBody.innerHTML = ""; // Limpa a tabela
+        const feeds = data.feeds;
 
-        data.forEach(item => {
-          const row = document.createElement("tr");
-          row.innerHTML = cadastroActive
-            ? `
-              <td>${item.usuario || "N/A"}</td>
-              <td>${item.acao || "N/A"}</td>
-              <td>${item.id || "N/A"}</td>
-              <td>${item.dataHora || "N/A"}</td>
-            `
-            : `
-              <td>${item.usuario || "N/A"}</td>
-              <td>${item.acao || "N/A"}</td>
-              <td>${item.gaveta || "N/A"}</td>
-              <td>${item.ferramenta || "N/A"}</td>
-              <td>${item.dataHora || "N/A"}</td>
-            `;
-          tableBody.appendChild(row);
-        });
+        // Atualiza a tabela com os dados recebidos
+        updateTable(feeds);
       } catch (error) {
-        console.error("Erro ao buscar dados do servidor:", error);
+        console.error("Erro ao buscar dados do ThingSpeak:", error);
       }
     }
 
-    // Atualiza o cabeçalho da tabela para "Eventos padrão"
-    function atualizarCabecalhoPadrao() {
-      const tableHeader = document.querySelector("#tableHeader");
-      tableHeader.innerHTML = `
-        <tr>
-          <th>Usuário</th>
-          <th>Ação</th>
-          <th>Gaveta</th>
-          <th>Ferramenta</th>
-          <th>Data / Hora</th>
-        </tr>
-      `;
+    // Função para atualizar a tabela com os dados do ThingSpeak
+    function updateTable(feeds) {
+      const tableBody = document.querySelector("#dataTable tbody");
+      tableBody.innerHTML = ""; // Limpa a tabela
+
+      feeds.forEach(feed => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${feed.field1 || "N/A"}</td>
+          <td>${feed.field5 || "N/A"}</td>
+          <td>${feed.field2 || "N/A"}</td>
+          <td>${feed.field3 || "N/A"}</td>
+          <td>${feed.field4 || "N/A"}</td>
+          <td>${feed.field6 || "N/A"}</td>
+        `;
+        tableBody.appendChild(row);
+      });
     }
 
-    // Atualiza o cabeçalho da tabela para "Cadastros e Exclusões"
-    function atualizarCabecalhoCadastro() {
-      const tableHeader = document.querySelector("#tableHeader");
-      tableHeader.innerHTML = `
-        <tr>
-          <th>Usuário</th>
-          <th>Ação</th>
-          <th>ID</th>
-          <th>Data / Hora</th>
-        </tr>
-      `;
-    }
-
-    // Alterna entre exibir ferramentas em uso e eventos padrão
-    function toggleFilter() {
-      filterActive = !filterActive;
-      cadastroActive = false;
-      atualizarTabela();
-    }
-
-    // Alterna entre exibir cadastros/exclusões e eventos padrão
-    function toggleCadastro() {
-      cadastroActive = !cadastroActive;
-      filterActive = false;
-      atualizarTabela();
-    }
-
-    // Atualiza a tabela a cada 9 segundos
-    setInterval(atualizarTabela, 9000);
-    atualizarTabela(); // Atualização inicial
+    // Atualiza a tabela a cada 15 segundos
+    setInterval(fetchData, 15000);
+    fetchData(); // Atualização inicial
   </script>
 </body>
 </html>
