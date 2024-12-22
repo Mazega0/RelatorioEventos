@@ -120,48 +120,31 @@
   </div>
 
   <script>
-    // Configurações do ThingSpeak
     const thingSpeakChannelID = "2780484"; // Seu Channel ID
     const thingSpeakReadKey = "VQF3FZEJ0JUT1B5N"; // Sua Read API Key
     const thingSpeakURL = `https://api.thingspeak.com/channels/${thingSpeakChannelID}/feeds.json?api_key=${thingSpeakReadKey}&results=100`;
 
-    let filterActive = false; // Controle do estado do filtro
-    let cadastroActive = false; // Controle do estado de exibição de cadastros
+    let filterActive = false;
+    let cadastroActive = false;
 
-    // Função para buscar e atualizar os dados na tabela
     async function atualizarTabela() {
       try {
         const response = await fetch(thingSpeakURL);
         const data = await response.json();
-
         const tableBody = document.querySelector("#dataTable tbody");
-        tableBody.innerHTML = ""; // Limpa a tabela
+        tableBody.innerHTML = "";
 
         const feeds = data.feeds.filter(feed => {
-          if (cadastroActive) {
-            return feed.field5 === "CADASTRO" || feed.field5 === "EXCLUSAO";
-          } else if (filterActive) {
-            return feed.field5 === "RETIRADA"; // Apenas ferramentas retiradas
-          }
-          return true; // Mostra todos os eventos
+          if (cadastroActive) return feed.field5 === "CADASTRO" || feed.field5 === "EXCLUSAO";
+          if (filterActive) return feed.field5 === "RETIRADA";
+          return true;
         });
 
         feeds.forEach(feed => {
           const row = document.createElement("tr");
           row.innerHTML = cadastroActive
-            ? `
-              <td>${feed.field1 || "N/A"}</td>
-              <td>${feed.field5 || "N/A"}</td>
-              <td>${feed.field6 || "N/A"}</td>
-              <td>${feed.field4 || "N/A"}</td>
-            `
-            : `
-              <td>${feed.field1 || "N/A"}</td>
-              <td>${feed.field5 || "N/A"}</td>
-              <td>${feed.field2 || "N/A"}</td>
-              <td>${feed.field3 || "N/A"}</td>
-              <td>${feed.field4 || "N/A"}</td>
-            `;
+            ? `<td>${feed.field1 || "N/A"}</td><td>${feed.field5 || "N/A"}</td><td>${feed.field6 || "N/A"}</td><td>${feed.field4 || "N/A"}</td>`
+            : `<td>${feed.field1 || "N/A"}</td><td>${feed.field5 || "N/A"}</td><td>${feed.field2 || "N/A"}</td><td>${feed.field3 || "N/A"}</td><td>${feed.field4 || "N/A"}</td>`;
           tableBody.appendChild(row);
         });
       } catch (error) {
@@ -169,50 +152,43 @@
       }
     }
 
-    // Atualiza o cabeçalho da tabela para "Eventos padrão"
     function atualizarCabecalhoPadrao() {
-      const tableHeader = document.querySelector("#tableHeader");
-      tableHeader.innerHTML = `
+      document.querySelector("#tableHeader").innerHTML = `
         <tr>
           <th>Usuário</th>
           <th>Ação</th>
           <th>Gaveta</th>
           <th>Ferramenta</th>
           <th>Data / Hora</th>
-        </tr>
-      `;
+        </tr>`;
     }
 
-    // Atualiza o cabeçalho da tabela para "Cadastros e Exclusões"
     function atualizarCabecalhoCadastro() {
-      const tableHeader = document.querySelector("#tableHeader");
-      tableHeader.innerHTML = `
+      document.querySelector("#tableHeader").innerHTML = `
         <tr>
           <th>Usuário</th>
           <th>Ação</th>
           <th>ID</th>
           <th>Data / Hora</th>
-        </tr>
-      `;
+        </tr>`;
     }
 
-    // Alterna entre exibir ferramentas em uso e eventos padrão
     function toggleFilter() {
       filterActive = !filterActive;
       cadastroActive = false;
+      filterActive ? atualizarCabecalhoPadrao() : atualizarCabecalhoCadastro();
       atualizarTabela();
     }
 
-    // Alterna entre exibir cadastros/exclusões e eventos padrão
     function toggleCadastro() {
       cadastroActive = !cadastroActive;
       filterActive = false;
+      cadastroActive ? atualizarCabecalhoCadastro() : atualizarCabecalhoPadrao();
       atualizarTabela();
     }
 
-    // Atualiza a tabela a cada 9 segundos
     setInterval(atualizarTabela, 9000);
-    atualizarTabela(); // Atualização inicial
+    atualizarTabela();
   </script>
 </body>
 </html>
