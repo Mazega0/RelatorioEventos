@@ -6,8 +6,8 @@
   <title>Relatório Completo - Usina Santa Fé</title>
   <style>
     body {
-      background-color: #0e1a2b;
-      color: #ffffff;
+      background-color: #0e1a2b; /* Azul escuro tecnológico */
+      color: #ffffff; /* Texto branco */
       font-family: Arial, sans-serif;
       text-align: center;
       margin: 0;
@@ -25,10 +25,16 @@
       height: auto;
       border: 3px solid #1f3b54;
       box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    img:hover {
+      transform: scale(1.05);
+      box-shadow: 0 10px 25px rgba(255, 255, 255, 0.4);
     }
     h1 {
       color: #ffffff;
       font-size: 28px;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
       margin-bottom: 20px;
     }
     table {
@@ -71,10 +77,21 @@
       align-items: center;
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
       cursor: pointer;
+      transition: transform 0.3s, background-color 0.3s, box-shadow 0.3s;
       color: white;
       font-size: 16px;
       font-weight: bold;
       text-transform: uppercase;
+      user-select: none;
+    }
+    .button div:hover {
+      transform: scale(1.1);
+      background-color: #005f99;
+    }
+    .button div:active,
+    .button div.active {
+      background-color: #003f6b;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
     }
   </style>
 </head>
@@ -103,46 +120,48 @@
   </div>
 
   <script>
-    const channelID = "2780484";
-    const readAPIKey = "4GN8RREPZSE1F83";
+    // Configurações do ThingSpeak
+    const thingSpeakChannelID = "2780484"; // Seu Channel ID
+    const thingSpeakReadKey = "VQF3FZEJ0JUT1B5N"; // Sua Read API Key
+    const thingSpeakURL = `https://api.thingspeak.com/channels/${thingSpeakChannelID}/feeds.json?api_key=${thingSpeakReadKey}&results=100`;
 
-    let filterActive = false;
-    let cadastroActive = false;
+    let filterActive = false; // Controle do estado do filtro
+    let cadastroActive = false; // Controle do estado de exibição de cadastros
 
+    // Função para buscar e atualizar os dados na tabela
     async function atualizarTabela() {
       try {
-        let url = `https://api.thingspeak.com/channels/${channelID}/feeds.json?api_key=${readAPIKey}&results=100`;
-        if (cadastroActive) {
-          atualizarCabecalhoCadastro();
-        } else if (filterActive) {
-          atualizarCabecalhoPadrao();
-        }
-
-        const response = await fetch(url);
-        const json = await response.json();
-        const feeds = json.feeds || [];
+        const response = await fetch(thingSpeakURL);
+        const data = await response.json();
 
         const tableBody = document.querySelector("#dataTable tbody");
-        tableBody.innerHTML = ""; 
+        tableBody.innerHTML = ""; // Limpa a tabela
+
+        const feeds = data.feeds.filter(feed => {
+          if (cadastroActive) {
+            return feed.field5 === "CADASTRO" || feed.field5 === "EXCLUSAO";
+          } else if (filterActive) {
+            return feed.field5 === "RETIRADA"; // Apenas ferramentas retiradas
+          }
+          return true; // Mostra todos os eventos
+        });
 
         feeds.forEach(feed => {
           const row = document.createElement("tr");
-          if (cadastroActive) {
-            row.innerHTML = `
+          row.innerHTML = cadastroActive
+            ? `
               <td>${feed.field1 || "N/A"}</td>
               <td>${feed.field5 || "N/A"}</td>
               <td>${feed.field6 || "N/A"}</td>
               <td>${feed.field4 || "N/A"}</td>
-            `;
-          } else {
-            row.innerHTML = `
+            `
+            : `
               <td>${feed.field1 || "N/A"}</td>
               <td>${feed.field5 || "N/A"}</td>
               <td>${feed.field2 || "N/A"}</td>
               <td>${feed.field3 || "N/A"}</td>
               <td>${feed.field4 || "N/A"}</td>
             `;
-          }
           tableBody.appendChild(row);
         });
       } catch (error) {
@@ -150,6 +169,7 @@
       }
     }
 
+    // Atualiza o cabeçalho da tabela para "Eventos padrão"
     function atualizarCabecalhoPadrao() {
       const tableHeader = document.querySelector("#tableHeader");
       tableHeader.innerHTML = `
@@ -163,6 +183,7 @@
       `;
     }
 
+    // Atualiza o cabeçalho da tabela para "Cadastros e Exclusões"
     function atualizarCabecalhoCadastro() {
       const tableHeader = document.querySelector("#tableHeader");
       tableHeader.innerHTML = `
@@ -175,20 +196,23 @@
       `;
     }
 
+    // Alterna entre exibir ferramentas em uso e eventos padrão
     function toggleFilter() {
       filterActive = !filterActive;
       cadastroActive = false;
       atualizarTabela();
     }
 
+    // Alterna entre exibir cadastros/exclusões e eventos padrão
     function toggleCadastro() {
       cadastroActive = !cadastroActive;
       filterActive = false;
       atualizarTabela();
     }
 
+    // Atualiza a tabela a cada 9 segundos
     setInterval(atualizarTabela, 9000);
-    atualizarTabela();
+    atualizarTabela(); // Atualização inicial
   </script>
 </body>
 </html>
