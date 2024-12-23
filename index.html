@@ -6,8 +6,8 @@
   <title>Relatório Completo - Usina Santa Fé</title>
   <style>
     body {
-      background-color: #0e1a2b;
-      color: #ffffff;
+      background-color: #0e1a2b; /* Azul escuro tecnológico */
+      color: #ffffff; /* Texto branco */
       font-family: Arial, sans-serif;
       text-align: center;
       margin: 0;
@@ -100,7 +100,9 @@
     <img src="https://th.bing.com/th/id/R.afd02dda6f3356d4a7e51f0b47b79e42?rik=RsXqYmTxjDXF%2bw&pid=ImgRaw&r=0" alt="Logo Usina Santa Fé">
     <h1>RELATÓRIO COMPLETO - USINA SANTA FÉ</h1>
     <table id="dataTable">
-      <thead id="tableHeader"></thead>
+      <thead id="tableHeader">
+        <!-- Cabeçalho da tabela será gerado dinamicamente -->
+      </thead>
       <tbody></tbody>
     </table>
     <div class="button">
@@ -110,13 +112,28 @@
   </div>
 
   <script>
-    const eventosURL = "https://api.thingspeak.com/channels/2780484/feeds.json?api_key=4GN8RREPZSEI1F83";
-    const ferramentasEmUsoURL = "https://api.thingspeak.com/channels/2780484/feeds.json?api_key=4GN8RREPZSEI1F83&field7";
-    const cadastrosURL = "https://api.thingspeak.com/channels/2780484/feeds.json?api_key=4GN8RREPZSEI1F83";
+    // URLs das rotas do servidor web
+    const eventosURL = "http://SEU_SERVIDOR/eventos";
+    const ferramentasEmUsoURL = "http://SEU_SERVIDOR/ferramentasEmUso";
+    const cadastrosURL = "http://SEU_SERVIDOR/cadastros";
 
-    let filterActive = false;
-    let cadastroActive = false;
+    let filterActive = false; // Controle do estado do filtro
+    let cadastroActive = false; // Controle do estado de exibição de cadastros
 
+    // Função para formatar data no formato brasileiro
+    function formatarData(dataISO) {
+      if (!dataISO) return "N/A"; // Caso não haja data
+      const data = new Date(dataISO); // Converte a string para objeto Date
+      const dia = String(data.getDate()).padStart(2, '0');
+      const mes = String(data.getMonth() + 1).padStart(2, '0'); // Meses começam do 0
+      const ano = data.getFullYear();
+      const horas = String(data.getHours()).padStart(2, '0');
+      const minutos = String(data.getMinutes()).padStart(2, '0');
+      const segundos = String(data.getSeconds()).padStart(2, '0');
+      return `${dia}/${mes}/${ano} ${horas}:${minutos}:${segundos}`;
+    }
+
+    // Função para buscar dados do servidor
     async function atualizarTabela() {
       try {
         let response;
@@ -132,24 +149,25 @@
         }
 
         const data = await response.json();
-        const tableBody = document.querySelector("#dataTable tbody");
-        tableBody.innerHTML = "";
 
-        data.feeds.forEach(item => {
+        const tableBody = document.querySelector("#dataTable tbody");
+        tableBody.innerHTML = ""; // Limpa a tabela
+
+        data.forEach(item => {
           const row = document.createElement("tr");
           row.innerHTML = cadastroActive
             ? `
-              <td>${item.field1 || "N/A"}</td>
-              <td>${item.field5 || "N/A"}</td>
-              <td>${item.field6 || "N/A"}</td>
-              <td>${item.created_at || "N/A"}</td>
+              <td>${item.usuario || "N/A"}</td>
+              <td>${item.acao || "N/A"}</td>
+              <td>${item.id || "N/A"}</td>
+              <td>${formatarData(item.dataHora) || "N/A"}</td>
             `
             : `
-              <td>${item.field1 || "N/A"}</td>
-              <td>${item.field5 || "N/A"}</td>
-              <td>${item.field2 || "N/A"}</td>
-              <td>${item.field3 || "N/A"}</td>
-              <td>${item.created_at || "N/A"}</td>
+              <td>${item.usuario || "N/A"}</td>
+              <td>${item.acao || "N/A"}</td>
+              <td>${item.gaveta || "N/A"}</td>
+              <td>${item.ferramenta || "N/A"}</td>
+              <td>${formatarData(item.dataHora) || "N/A"}</td>
             `;
           tableBody.appendChild(row);
         });
@@ -195,8 +213,9 @@
       atualizarTabela();
     }
 
+    // Atualiza a tabela a cada 15 segundos
     setInterval(atualizarTabela, 15000);
-    atualizarTabela();
+    atualizarTabela(); // Atualização inicial
   </script>
 </body>
 </html>
