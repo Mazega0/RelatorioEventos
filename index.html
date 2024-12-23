@@ -101,28 +101,33 @@
     <h1>RELATÓRIO COMPLETO - USINA SANTA FÉ</h1>
     <table id="dataTable">
       <thead id="tableHeader">
-        <!-- Cabeçalho da tabela será gerado dinamicamente -->
+        <tr>
+          <th>Usuário</th>
+          <th>Ação</th>
+          <th>Gaveta</th>
+          <th>Ferramenta</th>
+          <th>Data / Hora</th>
+        </tr>
       </thead>
-      <tbody></tbody>
+      <tbody>
+        <!-- Dados serão carregados dinamicamente -->
+      </tbody>
     </table>
     <div class="button">
-      <div id="checkin" title="Filtrar ferramentas retiradas" onclick="toggleFilter()">CHECK-IN</div>
+      <div id="checkin" title="Filtrar ferramentas fora da caixa" onclick="toggleCheckin()">CHECK-IN</div>
       <div id="cadastro" title="Visualizar cadastros/exclusões" onclick="toggleCadastro()">CADASTROS</div>
     </div>
   </div>
 
   <script>
-    // URLs do ThingSpeak para busca de dados
-    const channelID = "2780484";
-    const readAPIKey = "4GN8RREPZSE1F83";
-    const eventosURL = `https://api.thingspeak.com/channels/${channelID}/fields/1.json?api_key=${readAPIKey}`;
-    const ferramentasEmUsoURL = `https://api.thingspeak.com/channels/${channelID}/fields/7.json?api_key=${readAPIKey}`;
-    const cadastrosURL = `https://api.thingspeak.com/channels/${channelID}/feeds.json?api_key=${readAPIKey}`;
+    const thingSpeakChannelID = "2780484"; // Seu Channel ID
+    const thingSpeakReadKey = "VQF3FZEJ0JUT1B5N"; // Sua Read API Key
+    const thingSpeakURL = `https://api.thingspeak.com/channels/${thingSpeakChannelID}/feeds.json?api_key=${thingSpeakReadKey}&results=100`;
 
-    let filterActive = false; // Controle do estado do filtro
-    let cadastroActive = false; // Controle do estado de exibição de cadastros
+    let checkinActive = false;
+    let cadastroActive = false;
 
-    // Função para formatar data no formato brasileiro
+    // Função para formatar data no padrão brasileiro
     function formatarData(dataISO) {
       if (!dataISO) return "N/A"; // Caso não haja data
       const data = new Date(dataISO); // Converte a string para objeto Date
@@ -135,89 +140,68 @@
       return `${dia}/${mes}/${ano} ${horas}:${minutos}:${segundos}`;
     }
 
-    // Função para buscar dados do servidor
     async function atualizarTabela() {
       try {
-        let response;
-        if (cadastroActive) {
-          response = await fetch(cadastrosURL);
-          atualizarCabecalhoCadastro();
-        } else if (filterActive) {
-          response = await fetch(ferramentasEmUsoURL);
-          atualizarCabecalhoPadrao();
-        } else {
-          response = await fetch(eventosURL);
-          atualizarCabecalhoPadrao();
-        }
-
+        const response = await fetch(thingSpeakURL);
         const data = await response.json();
-
         const tableBody = document.querySelector("#dataTable tbody");
-        tableBody.innerHTML = ""; // Limpa a tabela
+        tableBody.innerHTML = "";
 
-        data.feeds.forEach(item => {
+        const feeds = data.feeds.filter(feed => {
+          if (cadastroActive) return feed.field5 === "CADASTRO" || feed.field5 === "EXCLUSAO";
+          if (checkinActive) return feed.field7 && feed.field7.includes("fora"); // Ferramentas fora
+          return true;
+        });
+
+        feeds.forEach(feed => {
           const row = document.createElement("tr");
           row.innerHTML = cadastroActive
-            ? `
-              <td>${item.field1 || "N/A"}</td>
-              <td>${item.field5 || "N/A"}</td>
-              <td>${item.field6 || "N/A"}</td>
-              <td>${formatarData(item.created_at) || "N/A"}</td>
-            `
-            : `
-              <td>${item.field1 || "N/A"}</td>
-              <td>${item.field5 || "N/A"}</td>
-              <td>${item.field2 || "N/A"}</td>
-              <td>${item.field3 || "N/A"}</td>
-              <td>${formatarData(item.created_at) || "N/A"}</td>
-            `;
+            ? `<td>${feed.field1 || "N/A"}</td><td>${feed.field5 || "N/A"}</td><td>${feed.field6 || "N/A"}</td><td>${formatarData(feed.created_at)}</td>`
+            : `<td>${feed.field1 || "N/A"}</td><td>${feed.field5 || "N/A"}</td><td>${feed.field2 || "N/A"}</td><td>${feed.field3 || "N/A"}</td><td>${formatarData(feed.created_at)}</td>`;
           tableBody.appendChild(row);
         });
       } catch (error) {
-        console.error("Erro ao buscar dados do servidor:", error);
+        console.error("Erro ao buscar dados do ThingSpeak:", error);
       }
     }
 
     function atualizarCabecalhoPadrao() {
-      const tableHeader = document.querySelector("#tableHeader");
-      tableHeader.innerHTML = `
+      document.querySelector("#tableHeader").innerHTML = `
         <tr>
           <th>Usuário</th>
           <th>Ação</th>
           <th>Gaveta</th>
           <th>Ferramenta</th>
           <th>Data / Hora</th>
-        </tr>
-      `;
+        </tr>`;
     }
 
     function atualizarCabecalhoCadastro() {
-      const tableHeader = document.querySelector("#tableHeader");
-      tableHeader.innerHTML = `
+      document.querySelector("#tableHeader").innerHTML = `
         <tr>
           <th>Usuário</th>
           <th>Ação</th>
           <th>ID</th>
           <th>Data / Hora</th>
-        </tr>
-      `;
+        </tr>`;
     }
 
-    function toggleFilter() {
-      filterActive = !filterActive;
+    function toggleCheckin() {
+      checkinActive = !checkinActive;
       cadastroActive = false;
+      atualizarCabecalhoPadrao();
       atualizarTabela();
     }
 
     function toggleCadastro() {
       cadastroActive = !cadastroActive;
-      filterActive = false;
+      checkinActive = false;
+      atualizarCabecalhoCadastro();
       atualizarTabela();
     }
 
-    // Atualiza a tabela a cada 15 segundos
-    setInterval(atualizarTabela, 15000);
-    atualizarTabela(); // Atualização inicial
+    setInterval(atualizarTabela, 9000); // Atualiza a cada 9 segundos
+    atualizarTabela(); // Atualiza inicialmente ao carregar
   </script>
 </body>
 </html>
